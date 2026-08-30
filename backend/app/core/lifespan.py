@@ -5,15 +5,17 @@ from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI
 
 from app.core.config import settings
+from app.core.database import init_db
 from app.messaging.gupshup import gupshup_client
 from app.sessions.store import session_store
-from app.seed import init_data
 from app.workflows.service import assistant_workflow
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    init_data()
+    # Create missing tables only — do NOT seed data. Seed once manually via
+    # `python -m app.seed` (or manage the DB directly).
+    init_db()
     sweeper = asyncio.create_task(
         session_store.sweep_expired(
             assistant_workflow.notify_expired,

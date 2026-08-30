@@ -5,8 +5,8 @@
 # The database selects Postgres or SQLite at RUNTIME via env vars:
 #   PROD_DB=true  +  DATABASE_URL  -> Postgres
 #   PROD_DB=false (default)        -> local SQLite
-# Tables + base data are seeded automatically on app startup (idempotent),
-# so no seed step is needed here at build time.
+# Tables are created automatically on app startup. No base data is seeded at
+# startup — seed once manually (or manage the DB directly).
 
 [variables]
 APP_PORT = "8000"
@@ -26,5 +26,5 @@ cmds = [
 
 [start]
 # Use uvicorn directly (module `app` exposes the FastAPI app as `app`).
-# Startup seeds tables + base data via the lifespan hook.
+# Startup only creates missing tables via the lifespan hook (no data seeding).
 cmd = "/opt/venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port ${APP_PORT:-8000}"
