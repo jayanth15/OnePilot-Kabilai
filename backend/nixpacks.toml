@@ -1,0 +1,24 @@
+# Nixpacks config for the Kabilai backend (FastAPI + SQLModel + Pydantic AI).
+# Deployed from the `backend/` directory. Sets up Python, installs deps with uv,
+# seeds the database, and runs the API on APP_PORT.
+
+[variables]
+APP_PORT = "8000"
+PYTHON_VERSION = "3.13"
+
+[phases.setup]
+nixPkgs = ["python313", "gcc", "uv"]
+
+[phases.install]
+cmds = [
+  # Create a shared, writable venv for the running app
+  "python -m venv --copies /opt/venv",
+  "uv pip install --python /opt/venv/bin/python -r requirements.txt",
+  "mkdir -p data",
+  # Seed the admin user + sample products/areas if absent (idempotent)
+  "/opt/venv/bin/python -m app.seed"
+]
+
+[start]
+# Use uvicorn directly (module `app` exposes the FastAPI app as `app`).
+cmd = "/opt/venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port ${APP_PORT:-8000}"

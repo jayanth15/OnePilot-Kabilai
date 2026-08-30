@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+backend/data/*.db
+
+# Secrets — never commit real keys
+.env
+.env.local
+backend/.env
+
+# Node / frontend
+node_modules/
+dist/
+dist-ssr/
+.next/
+.out
+.output
+.vinxi
+.wrangler
+__unconfig*
+*.tsbuildinfo
+*.local
+.tanstack
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+todos.json
