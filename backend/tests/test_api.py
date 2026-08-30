@@ -35,7 +35,7 @@ class ApiTests(unittest.TestCase):
     def _token(self) -> str:
         res = self.client.post(
             "/api/v1/auth/login",
-            json={"email": "admin@onecorestack.com", "password": "password"},
+            json={"email": "gopinath@kabilaifarm.com", "password": "Gopinath@12345!"},
         )
         self.assertEqual(res.status_code, 200)
         return res.json()["access_token"]
@@ -43,7 +43,7 @@ class ApiTests(unittest.TestCase):
     def test_login(self) -> None:
         res = self.client.post(
             "/api/v1/auth/login",
-            json={"email": "admin@onecorestack.com", "password": "password"},
+            json={"email": "gopinath@kabilaifarm.com", "password": "Gopinath@12345!"},
         )
         self.assertEqual(res.status_code, 200)
         self.assertIn("access_token", res.json())

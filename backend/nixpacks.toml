@@ -5,6 +5,9 @@
 [variables]
 APP_PORT = "8000"
 PYTHON_VERSION = "3.13"
+# In production set PROD_DB=true and provide DATABASE_URL (Postgres).
+# For local/SQLite builds leave PROD_DB=false.
+PROD_DB = "true"
 
 [phases.setup]
 nixPkgs = ["python313", "gcc", "uv"]

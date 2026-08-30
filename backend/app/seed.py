@@ -63,8 +63,13 @@ def _seed_company(session: Session) -> None:
     print(f"Seeded company: {BRAND}")
 
 
+ADMIN_EMAIL = "gopinath@kabilaifarm.com"
+ADMIN_PASSWORD = "Gopinath@12345!"
+ADMIN_NAME = "Gopinath"
+
+
 def _seed_admin(session: Session) -> None:
-    existing = session.exec(select(User).where(User.email == "admin@onecorestack.com")).first()
+    existing = session.exec(select(User).where(User.email == ADMIN_EMAIL)).first()
     if existing:
         if not existing.is_admin:
             existing.role = "admin"
@@ -72,14 +77,14 @@ def _seed_admin(session: Session) -> None:
         print("Admin user already exists.")
         return
     user = User(
-        name="Admin",
-        email="admin@onecorestack.com",
-        password_hash=hash_password("password"),
+        name=ADMIN_NAME,
+        email=ADMIN_EMAIL,
+        password_hash=hash_password(ADMIN_PASSWORD),
         is_platform_admin=True,
         role="admin",
     )
     session.add(user)
-    print("Seeded platform admin: admin@onecorestack.com / password")
+    print(f"Seeded platform admin: {ADMIN_EMAIL}")
 
 
 def _seed_products(session: Session) -> None:

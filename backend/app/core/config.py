@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     api_prefix: str = "/api/v1"
     cors_origins: str = "http://localhost:3000,http://localhost:3001"
 
+    # Database: prod_db=True uses DATABASE_URL (Postgres). False uses SQLite.
+    prod_db: bool = False
+    database_url: str = ""
+
     jwt_secret: str = "change-me-in-production-change-me-in-production!!"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
