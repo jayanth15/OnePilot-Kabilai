@@ -1,13 +1,17 @@
 # Nixpacks config for the Kabilai backend (FastAPI + SQLModel + Pydantic AI).
 # Deployed from the `backend/` directory. Sets up Python, installs deps with uv,
-# seeds the database, and runs the API on APP_PORT.
+# and runs the API on APP_PORT.
+#
+# The database selects Postgres or SQLite at RUNTIME via env vars:
+#   PROD_DB=true  +  DATABASE_URL  -> Postgres
+#   PROD_DB=false (default)        -> local SQLite
+# Tables + base data are seeded automatically on app startup (idempotent),
+# so no seed step is needed here at build time.
 
 [variables]
 APP_PORT = "8000"
 PYTHON_VERSION = "3.13"
-# In production set PROD_DB=true and provide DATABASE_URL (Postgres).
-# For local/SQLite builds leave PROD_DB=false.
-PROD_DB = "true"
+# PROD_DB and DATABASE_URL are supplied by the platform at deploy/runtime.
 
 [phases.setup]
 nixPkgs = ["python313", "gcc", "uv"]
@@ -17,11 +21,10 @@ cmds = [
   # Create a shared, writable venv for the running app
   "python -m venv --copies /opt/venv",
   "uv pip install --python /opt/venv/bin/python -r requirements.txt",
-  "mkdir -p data",
-  # Seed the admin user + sample products/areas if absent (idempotent)
-  "/opt/venv/bin/python -m app.seed"
+  "mkdir -p data"
 ]
 
 [start]
 # Use uvicorn directly (module `app` exposes the FastAPI app as `app`).
+# Startup seeds tables + base data via the lifespan hook.
 cmd = "/opt/venv/bin/python -m uvicorn app:app --host 0.0.0.0 --port ${APP_PORT:-8000}"

@@ -43,7 +43,8 @@ CHENNAI_AREAS = [
 ]
 
 
-def seed() -> None:
+def init_data() -> None:
+    """Ensure tables exist and base data is present. Idempotent."""
     init_db()
     with Session(engine) as session:
         _seed_company(session)
@@ -51,7 +52,11 @@ def seed() -> None:
         _seed_products(session)
         _seed_delivery_areas(session)
         session.commit()
-        print("Seeding complete.")
+
+
+def seed() -> None:
+    init_data()
+    print("Seeding complete.")
 
 
 def _seed_company(session: Session) -> None:

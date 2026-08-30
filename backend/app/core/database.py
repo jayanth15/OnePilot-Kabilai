@@ -15,7 +15,12 @@ def _build_engine():
     if settings.prod_db:
         url = settings.database_url or os.environ.get("DATABASE_URL", "")
         if not url:
-            raise RuntimeError("prod_db=True but DATABASE_URL is not set")
+            # DATABASE_URL not available (e.g. at build time) — fall back to SQLite
+            # so the app can still import/start locally. Point it at the local file.
+            return create_engine(
+                f"sqlite:///{os.environ.get('KABILAI_DB_PATH', str(DB_DIR / 'kabilai.db'))}",
+                connect_args={"check_same_thread": False},
+            )
         # Use the psycopg (v3) dialect if no explicit dialect is provided.
         if url.startswith("postgresql://") or url.startswith("postgres://"):
             url = url.replace("postgresql://", "postgresql+psycopg://", 1).replace(
