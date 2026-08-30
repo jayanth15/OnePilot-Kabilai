@@ -12,10 +12,11 @@ NODE_ENV = "production"
 
 [phases.install]
 cmds = [
-  # Install using the lockfile for reproducible builds
-  "npm ci"
+  # `npm install` (not `npm ci`): npm ci removes node_modules, which would
+  # rmdir the cache-mounted node_modules/.cache and fail with EBUSY.
+  # Install respects the package-lock.json for reproducible builds.
+  "npm install"
 ]
-cacheDirectories = ["node_modules/.cache"]
 
 [phases.build]
 cmds = [
