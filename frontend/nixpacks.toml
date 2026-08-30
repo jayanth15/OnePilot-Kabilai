@@ -1,0 +1,27 @@
+# Nixpacks config for the Kabilai frontend (TanStack Start + Vite 8).
+# Vite 8 requires Node >=20.19 / >=22.12 — pinned via .nvmrc (22) and
+# package.json engines. Deployed from the `frontend/` directory.
+
+[variables]
+APP_PORT = "3000"
+NODE_ENV = "production"
+
+[phases.setup]
+# No extra nixPkgs needed — the Node provider (from .nvmrc / engines) supplies
+# the correct Node runtime.
+
+[phases.install]
+cmds = [
+  # Install using the lockfile for reproducible builds
+  "npm ci"
+]
+cacheDirectories = ["node_modules/.cache"]
+
+[phases.build]
+cmds = [
+  "npm run build"
+]
+dependsOn = ["install"]
+
+[start]
+cmd = "npm run start"
