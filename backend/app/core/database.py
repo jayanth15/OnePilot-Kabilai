@@ -17,6 +17,7 @@ def _build_engine():
         if not url:
             # DATABASE_URL not available (e.g. at build time) — fall back to SQLite
             # so the app can still import/start locally. Point it at the local file.
+            print("[db] PROD_DB=true but DATABASE_URL is empty -> using SQLite fallback")
             return create_engine(
                 f"sqlite:///{os.environ.get('KABILAI_DB_PATH', str(DB_DIR / 'kabilai.db'))}",
                 connect_args={"check_same_thread": False},
@@ -26,7 +27,14 @@ def _build_engine():
             url = url.replace("postgresql://", "postgresql+psycopg://", 1).replace(
                 "postgres://", "postgresql+psycopg://", 1
             )
-        return create_engine(url, pool_pre_ping=True, pool_size=10, max_overflow=20)
+        print(f"[db] connecting to Postgres: {url.split('@')[-1]}")
+        return create_engine(
+            url,
+            pool_pre_ping=True,
+            pool_size=10,
+            max_overflow=20,
+            connect_args={"connect_timeout": 10},
+        )
 
     _db_path = os.environ.get("KABILAI_DB_PATH", str(DB_DIR / "kabilai.db"))
     url = f"sqlite:///{_db_path}"
