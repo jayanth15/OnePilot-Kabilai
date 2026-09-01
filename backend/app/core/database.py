@@ -49,6 +49,11 @@ _ADDITIVE_COLUMNS: list[tuple[str, str, str]] = [
     ("user", "role", "VARCHAR(255) NOT NULL DEFAULT 'user'"),
     ("user", "created_at", "TIMESTAMP"),
     ("message", "direction", "VARCHAR(32) NOT NULL DEFAULT 'inbound'"),
+    ("company", "address", "VARCHAR(500) NOT NULL DEFAULT ''"),
+    ("company", "phone", "VARCHAR(50) NOT NULL DEFAULT ''"),
+    ("company", "whatsapp_number", "VARCHAR(50) NOT NULL DEFAULT ''"),
+    ("company", "intro_message", "TEXT NOT NULL DEFAULT ''"),
+    ("company", "ai_enabled", "BOOLEAN NOT NULL DEFAULT TRUE"),
 ]
 
 
