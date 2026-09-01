@@ -33,6 +33,20 @@ export type Enquiry = {
   updated_at: string
 }
 
+export type Complaint = {
+  id: number
+  complaint_number: string
+  customer_name: string
+  phone: string
+  message: string
+  category: string
+  related_product: string
+  status: string
+  source: string
+  created_at: string
+  updated_at: string
+}
+
 export type Contact = {
   id: number
   phone: string

@@ -17,6 +17,9 @@ from app.agents.replies import (
     DairyReply,
     CompanyInfo,
     CompanyInfoReply,
+    ComplaintConfirmedReply,
+    ComplaintItem,
+    ComplaintListReply,
     DeliveryCoverageReply,
     DeliveryReply,
     EnquiryConfirmedReply,
@@ -42,6 +45,10 @@ from app.services.enquiry_service import (
     list_enquiries_for_phone,
     get_latest_enquiry_for_phone,
     update_enquiry_fields,
+)
+from app.services.complaint_service import (
+    create_complaint,
+    list_complaints_for_phone,
 )
 from app.messaging.gupshup import gupshup_client
 
@@ -86,10 +93,17 @@ agent = Agent(
         "- For ANY question about delivery to an area or pincode, you MUST call check_delivery_area.\n"
         "- For the company address/contact, you MUST call get_company_information.\n"
         "- Never invent products, prices, or areas. If a tool returns nothing, say so.\n\n"
+        "CLASSIFY THE MESSAGE FIRST: is it an ENQUIRY or a COMPLAINT?\n"
+        "- COMPLAINT = the customer is unhappy / reporting a problem (e.g. milk not delivered, "
+        "milk is bad/sour, wrong item, late delivery, damaged product, billing issue). "
+        "If it is a complaint you MUST call capture_complaint.\n"
+        "- ENQUIRY = the customer is asking about products, prices, availability, delivery, or "
+        "interest in buying. If it is an enquiry you MUST call create_enquiry_tool.\n\n"
         "Reply mapping:\n"
         "- ProductListReply for the catalog, ProductPriceReply for a price.\n"
         "- DeliveryReply for availability, CompanyInfoReply for company details.\n"
         "- EnquiryConfirmedReply for a confirmed enquiry, EnquiryListReply for past enquiries.\n"
+        "- ComplaintConfirmedReply for a captured complaint, ComplaintListReply for past complaints.\n"
         "- HelpReply for a menu, HandoffReply to escalate, TextReply only for brief chat."
     ),
 )
@@ -232,3 +246,50 @@ async def request_operator_handoff(ctx: RunContext[AgentDeps], phone: str) -> Ha
     except Exception:
         pass
     return HandoffReply()
+
+
+@agent.tool
+async def capture_complaint(
+    ctx: RunContext[AgentDeps],
+    phone: str,
+    message: str = "",
+    customer_name: str = "",
+    category: str = "other",
+    related_product: str = "",
+) -> ComplaintConfirmedReply:
+    """Capture a customer complaint (e.g. milk not delivered, milk is bad).
+    Provide phone and optional category/product. Sends a WhatsApp confirmation."""
+    with Session(engine) as session:
+        brand = _msg_brand(session)
+        complaint = create_complaint(
+            session,
+            phone=phone,
+            message=message,
+            customer_name=customer_name,
+            category=category,
+            related_product=related_product,
+            source="whatsapp",
+        )
+
+    return ComplaintConfirmedReply(
+        complaint_number=complaint.complaint_number,
+        category=category,
+        related_product=related_product,
+        brand=brand,
+    )
+
+
+@agent.tool
+async def find_complaints_by_phone(ctx: RunContext[AgentDeps], phone: str) -> list[ComplaintItem]:
+    """Find past complaints for a customer by phone number."""
+    with Session(engine) as session:
+        complaints = list_complaints_for_phone(session, phone)
+        return [
+            ComplaintItem(
+                complaint_number=c.complaint_number,
+                category=c.category,
+                related_product=c.related_product,
+                status=c.status,
+            )
+            for c in complaints
+        ]

@@ -138,6 +138,34 @@ class ApiTests(unittest.TestCase):
         )
         self.assertEqual(updated.json()["status"], "converted")
 
+    def test_complaint_capture(self) -> None:
+        token = self._token()
+        headers = {"Authorization": f"Bearer {token}"}
+        res = self.client.post(
+            "/api/v1/complaints",
+            headers=headers,
+            json={"phone": "9876512345", "customer_name": "Asha", "message": "Milk not delivered today", "category": "delivery"},
+        )
+        self.assertEqual(res.status_code, 200)
+        body = res.json()
+        self.assertEqual(body["status"], "pending")
+        self.assertEqual(body["category"], "delivery")
+        self.assertTrue(body["complaint_number"].startswith("CMP-"))
+
+        found = self.client.get("/api/v1/complaints/by-phone/9876512345", headers=headers)
+        self.assertEqual(found.status_code, 200)
+        self.assertEqual(len(found.json()), 1)
+
+        updated = self.client.patch(
+            f"/api/v1/complaints/{body['id']}", headers=headers, json={"status": "resolved"}
+        )
+        self.assertEqual(updated.json()["status"], "resolved")
+
+        # Admin-only history
+        history = self.client.get(f"/api/v1/complaints/{body['id']}/history", headers=headers)
+        self.assertEqual(history.status_code, 200)
+        self.assertEqual(history.json()["total"], 2)  # created + status change
+
     def test_ai_toggle_ignores_webhook_when_disabled(self) -> None:
         token = self._token()
         headers = {"Authorization": f"Bearer {token}"}

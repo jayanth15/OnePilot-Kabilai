@@ -10,6 +10,7 @@ import {
   Settings01Icon,
   Logout02Icon,
   UserMultiple02Icon,
+  BugIcon,
 } from "@hugeicons/core-free-icons"
 import { HugeiconsIcon } from "@hugeicons/react"
 
@@ -34,6 +35,7 @@ const navItems = [
   { title: "Products", href: "/products", icon: MilkIcon, adminOnly: false },
   { title: "Delivery Areas", href: "/delivery-areas", icon: Location01Icon, adminOnly: false },
   { title: "Enquiries", href: "/enquiries", icon: ContactIcon, adminOnly: false },
+  { title: "Complaints", href: "/complaints", icon: BugIcon, adminOnly: false },
   { title: "Chat", href: "/chat", icon: BubbleChatIcon, adminOnly: false },
   { title: "Users", href: "/users", icon: UserMultiple02Icon, adminOnly: true },
   { title: "Settings", href: "/settings", icon: Settings01Icon, adminOnly: false },

@@ -4,6 +4,7 @@ from app.api.routes import (
     agent,
     auth,
     company,
+    complaints,
     contacts,
     delivery_areas,
     enquiries,
@@ -26,5 +27,6 @@ api_router.include_router(workflows.router, prefix="/workflows", tags=["workflow
 api_router.include_router(products.router)
 api_router.include_router(delivery_areas.router)
 api_router.include_router(enquiries.router)
+api_router.include_router(complaints.router)
 api_router.include_router(company.router)
 api_router.include_router(users.router)

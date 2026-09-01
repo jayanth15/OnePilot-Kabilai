@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ChatRouteImport } from './routes/chat'
+import { Route as ComplaintsRouteImport } from './routes/complaints'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DeliveryAreasRouteImport } from './routes/delivery-areas'
 import { Route as EnquiriesRouteImport } from './routes/enquiries'
@@ -27,6 +28,11 @@ const IndexRoute = IndexRouteImport.update({
 const ChatRoute = ChatRouteImport.update({
   id: '/chat',
   path: '/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComplaintsRoute = ComplaintsRouteImport.update({
+  id: '/complaints',
+  path: '/complaints',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -68,6 +74,7 @@ const UsersRoute = UsersRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chat': typeof ChatRoute
+  '/complaints': typeof ComplaintsRoute
   '/dashboard': typeof DashboardRoute
   '/delivery-areas': typeof DeliveryAreasRoute
   '/enquiries': typeof EnquiriesRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chat': typeof ChatRoute
+  '/complaints': typeof ComplaintsRoute
   '/dashboard': typeof DashboardRoute
   '/delivery-areas': typeof DeliveryAreasRoute
   '/enquiries': typeof EnquiriesRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/chat': typeof ChatRoute
+  '/complaints': typeof ComplaintsRoute
   '/dashboard': typeof DashboardRoute
   '/delivery-areas': typeof DeliveryAreasRoute
   '/enquiries': typeof EnquiriesRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/chat'
+    | '/complaints'
     | '/dashboard'
     | '/delivery-areas'
     | '/enquiries'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/chat'
+    | '/complaints'
     | '/dashboard'
     | '/delivery-areas'
     | '/enquiries'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/chat'
+    | '/complaints'
     | '/dashboard'
     | '/delivery-areas'
     | '/enquiries'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ChatRoute: typeof ChatRoute
+  ComplaintsRoute: typeof ComplaintsRoute
   DashboardRoute: typeof DashboardRoute
   DeliveryAreasRoute: typeof DeliveryAreasRoute
   EnquiriesRoute: typeof EnquiriesRoute
@@ -161,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/chat'
       fullPath: '/chat'
       preLoaderRoute: typeof ChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/complaints': {
+      id: '/complaints'
+      path: '/complaints'
+      fullPath: '/complaints'
+      preLoaderRoute: typeof ComplaintsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -218,6 +238,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChatRoute: ChatRoute,
+  ComplaintsRoute: ComplaintsRoute,
   DashboardRoute: DashboardRoute,
   DeliveryAreasRoute: DeliveryAreasRoute,
   EnquiriesRoute: EnquiriesRoute,

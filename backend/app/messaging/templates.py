@@ -80,6 +80,28 @@ def enquiry_captured_msg(enquiry_number: str, product_interest: str, area: str, 
     )
 
 
+def complaint_captured_msg(complaint_number: str, category: str, related_product: str, brand: str) -> str:
+    cat = f" *{category.capitalize()}*" if category else ""
+    product = f" regarding *{related_product}*" if related_product else ""
+    return (
+        f"\U0001f4a1 *Complaint received!*\n\n"
+        f"Reference: *{complaint_number}*\n"
+        f"Complaint{cat}{product}.\n\n"
+        f"Thank you for letting us know, {brand}. Our team will look into this and get back to you shortly \u23f0"
+    )
+
+
+def complaint_list_msg(brand: str, complaints: list) -> str:
+    if not complaints:
+        return "You have no complaints on record."
+    lines = [f"*{brand} - Your Complaints:*"]
+    for c in complaints:
+        cat = c.category.capitalize() if c.category else "General"
+        product = f" ({c.related_product})" if c.related_product else ""
+        lines.append(f"{c.complaint_number}: {cat}{product} [{c.status}]")
+    return "\n".join(lines)
+
+
 def operator_handoff_msg() -> str:
     return (
         "Connecting you to our team. Please wait while we transfer you to a human agent. \u23f3"
@@ -143,6 +165,14 @@ def render_reply(reply) -> str:
         return enquiry_captured_msg(
             reply.enquiry_number, reply.product_interest, reply.delivery_area, reply.brand
         )
+
+    if kind == "complaint_confirmed":
+        return complaint_captured_msg(
+            reply.complaint_number, reply.category, reply.related_product, reply.brand
+        )
+
+    if kind == "complaint_list":
+        return complaint_list_msg("Kabilai Dairy", reply.complaints)
 
     if kind == "handoff":
         return operator_handoff_msg()

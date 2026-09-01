@@ -24,6 +24,13 @@ class EnquiryItem(BaseModel):
     status: str = ""
 
 
+class ComplaintItem(BaseModel):
+    complaint_number: str
+    category: str = ""
+    related_product: str = ""
+    status: str = ""
+
+
 class CompanyInfo(BaseModel):
     name: str
     address: str = ""
@@ -77,6 +84,19 @@ class EnquiryConfirmedReply(BaseModel):
     brand: str = ""
 
 
+class ComplaintConfirmedReply(BaseModel):
+    type: Literal["complaint_confirmed"] = "complaint_confirmed"
+    complaint_number: str
+    category: str = ""
+    related_product: str = ""
+    brand: str = ""
+
+
+class ComplaintListReply(BaseModel):
+    type: Literal["complaint_list"] = "complaint_list"
+    complaints: list[ComplaintItem] = Field(default_factory=list)
+
+
 class HandoffReply(BaseModel):
     type: Literal["handoff"] = "handoff"
 
@@ -94,6 +114,8 @@ DairyReply = (
     | CompanyInfoReply
     | EnquiryListReply
     | EnquiryConfirmedReply
+    | ComplaintConfirmedReply
+    | ComplaintListReply
     | HandoffReply
     | HelpReply
 )
