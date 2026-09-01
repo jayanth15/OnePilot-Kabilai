@@ -91,10 +91,11 @@ def complaint_captured_msg(complaint_number: str, category: str, related_product
     )
 
 
-def complaint_in_progress_msg(brand: str) -> str:
+def complaint_in_progress_msg(brand: str, complaint_number: str = "") -> str:
+    ref = f"\n\nYour reference: *{complaint_number}*" if complaint_number else ""
     return (
         f"Thank you for reaching out again. We already have your complaint on record "
-        f"and our team is looking into it \u23f0\n\n"
+        f"and our team is looking into it \u23f0{ref}\n\n"
         f"We're sorry for the inconvenience. A support team member will contact you soon.\n\n"
         f"Is there anything else you need? \U0001f44d"
     )
@@ -181,7 +182,7 @@ def render_reply(reply) -> str:
         )
 
     if kind == "complaint_in_progress":
-        return complaint_in_progress_msg(reply.brand or "Kabilai Dairy")
+        return complaint_in_progress_msg(reply.brand or "Kabilai Dairy", reply.complaint_number)
 
     if kind == "complaint_list":
         return complaint_list_msg("Kabilai Dairy", reply.complaints)
