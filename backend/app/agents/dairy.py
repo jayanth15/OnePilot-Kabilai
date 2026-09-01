@@ -99,6 +99,10 @@ agent = Agent(
         "If it is a complaint you MUST call capture_complaint.\n"
         "- ENQUIRY = the customer is asking about products, prices, availability, delivery, or "
         "interest in buying. If it is an enquiry you MUST call create_enquiry_tool.\n\n"
+        "CUSTOMER PHONE: You already know the customer's phone number (it is provided to you in "
+        "the tool context). DO NOT ask the customer for their phone number. Read it back and just "
+        "confirm it before registering (e.g. \"I have your number as 91XXXXXXXXXX — correct?\"). "
+        "Do not request payment details.\n\n"
         "Reply mapping:\n"
         "- ProductListReply for the catalog, ProductPriceReply for a price.\n"
         "- DeliveryReply for availability, CompanyInfoReply for company details.\n"
@@ -189,10 +193,11 @@ async def list_delivery_area_names(ctx: RunContext[AgentDeps]) -> list[str]:
 
 
 @agent.tool
-async def find_enquiries_by_phone(ctx: RunContext[AgentDeps], phone: str) -> list[EnquiryItem]:
-    """Find past enquiries for a customer by phone number."""
+async def find_enquiries_by_phone(ctx: RunContext[AgentDeps], phone: str = "") -> list[EnquiryItem]:
+    """Find past enquiries for a customer by phone number. Defaults to the caller's number."""
+    target = normalize_phone(phone) if phone else normalize_phone(ctx.deps.phone)
     with Session(engine) as session:
-        enquiries = list_enquiries_for_phone(session, phone)
+        enquiries = list_enquiries_for_phone(session, target)
         return [
             EnquiryItem(
                 enquiry_number=e.enquiry_number,
@@ -207,19 +212,20 @@ async def find_enquiries_by_phone(ctx: RunContext[AgentDeps], phone: str) -> lis
 @agent.tool
 async def create_enquiry_tool(
     ctx: RunContext[AgentDeps],
-    phone: str,
+    phone: str = "",
     message: str = "",
     customer_name: str = "",
     product_interest: str = "",
     delivery_area: str = "",
 ) -> EnquiryConfirmedReply:
-    """Capture a customer enquiry. Provide phone and optional product/area.
+    """Capture a customer enquiry. Defaults to the caller's phone number.
     Sends a WhatsApp confirmation to the customer."""
+    target = normalize_phone(phone) if phone else normalize_phone(ctx.deps.phone)
     with Session(engine) as session:
         brand = _msg_brand(session)
         enquiry = create_enquiry(
             session,
-            phone=phone,
+            phone=target,
             message=message,
             customer_name=customer_name,
             product_interest=product_interest,
@@ -236,9 +242,9 @@ async def create_enquiry_tool(
 
 
 @agent.tool
-async def request_operator_handoff(ctx: RunContext[AgentDeps], phone: str) -> HandoffReply:
-    """Hand the customer over to a human member of our team."""
-    normalized = normalize_phone(phone)
+async def request_operator_handoff(ctx: RunContext[AgentDeps], phone: str = "") -> HandoffReply:
+    """Hand the customer over to a human member of our team. Defaults to the caller's number."""
+    normalized = normalize_phone(phone) if phone else normalize_phone(ctx.deps.phone)
     try:
         from app.messaging.templates import operator_handoff_msg
 
@@ -251,19 +257,20 @@ async def request_operator_handoff(ctx: RunContext[AgentDeps], phone: str) -> Ha
 @agent.tool
 async def capture_complaint(
     ctx: RunContext[AgentDeps],
-    phone: str,
+    phone: str = "",
     message: str = "",
     customer_name: str = "",
     category: str = "other",
     related_product: str = "",
 ) -> ComplaintConfirmedReply:
     """Capture a customer complaint (e.g. milk not delivered, milk is bad).
-    Provide phone and optional category/product. Sends a WhatsApp confirmation."""
+    Defaults to the caller's phone number. Sends a WhatsApp confirmation."""
+    target = normalize_phone(phone) if phone else normalize_phone(ctx.deps.phone)
     with Session(engine) as session:
         brand = _msg_brand(session)
         complaint = create_complaint(
             session,
-            phone=phone,
+            phone=target,
             message=message,
             customer_name=customer_name,
             category=category,
@@ -280,10 +287,11 @@ async def capture_complaint(
 
 
 @agent.tool
-async def find_complaints_by_phone(ctx: RunContext[AgentDeps], phone: str) -> list[ComplaintItem]:
-    """Find past complaints for a customer by phone number."""
+async def find_complaints_by_phone(ctx: RunContext[AgentDeps], phone: str = "") -> list[ComplaintItem]:
+    """Find past complaints for a customer by phone number. Defaults to the caller's number."""
+    target = normalize_phone(phone) if phone else normalize_phone(ctx.deps.phone)
     with Session(engine) as session:
-        complaints = list_complaints_for_phone(session, phone)
+        complaints = list_complaints_for_phone(session, target)
         return [
             ComplaintItem(
                 complaint_number=c.complaint_number,
