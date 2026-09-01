@@ -1,14 +1,17 @@
 import logging
 
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from app.agents.dairy import AgentDeps, agent, normalize_output
 from app.core.config import settings
 from app.core.database import engine
 from app.messaging.gupshup import gupshup_client
 from app.messaging.templates import render_reply
-from app.models.contact import Contact
-from app.models.conversation import Conversation, Message
+from app.services.conversation_service import (
+    add_message,
+    ensure_contact,
+    ensure_conversation,
+)
 from app.sessions.models import Session as ChatSession
 from app.sessions.store import session_store
 from app.workflows.models import WorkflowSummary
@@ -27,29 +30,15 @@ GOODBYE = "\U0001f44b *AI mode off.* You're back with the human now. Say *kabila
 EXPIRED = "\u23f1\ufe0f *AI session ended* after {mins} min idle. Say *kabilai ai* anytime to chat again."
 
 
-def _ensure_contact(phone: str, name: str) -> int:
-    with Session(engine) as session:
-        contact = session.exec(select(Contact).where(Contact.phone == phone)).first()
-        if not contact:
-            contact = Contact(phone=phone, name=name)
-            session.add(contact)
-            session.commit()
-            session.refresh(contact)
-            logger.info("Created new contact: %s (%s)", phone, name)
-        elif name and contact.name != name:
-            contact.name = name
-            session.commit()
-        return contact.id  # type: ignore[return-value]
-
-
 def _save_message(conversation_id: int, role: str, content: str) -> None:
     with Session(engine) as session:
-        msg = Message(conversation_id=conversation_id, role=role, content=content)
-        session.add(msg)
-        conv = session.get(Conversation, conversation_id)
-        if conv:
-            conv.last_message_at = msg.created_at
-        session.commit()
+        add_message(
+            session,
+            conversation_id,
+            role=role,
+            content=content,
+            direction="outbound" if role == "assistant" else "inbound",
+        )
 
 
 class AssistantWorkflow:
@@ -82,37 +71,39 @@ class AssistantWorkflow:
 
             ai_enabled = get_company_info(session).get("ai_enabled", True)
 
-        if not ai_enabled:
-            logger.info("AI assistant disabled; ignoring message from %s", destination)
-            return
-
         normalized = " ".join(text.lower().split())
-        chat_session = await session_store.get_active(destination)
-        contact_id = _ensure_contact(destination, sender_name)
 
+        # Always record the inbound message (customer -> us), regardless of
+        # whether the AI is active or the user said the activation phrase.
         with Session(engine) as db_session:
-            conversation = db_session.exec(
-                select(Conversation).where(Conversation.contact_id == contact_id).order_by(Conversation.started_at.desc())
-            ).first()
-            if not conversation:
-                conversation = Conversation(contact_id=contact_id)
-                db_session.add(conversation)
-                db_session.commit()
-                cid = conversation.id
-            else:
-                cid = conversation.id
+            contact = ensure_contact(db_session, destination, sender_name)
+            conversation = ensure_conversation(db_session, contact.id)  # type: ignore[arg-type]
+            cid = conversation.id
+            assert cid is not None
+            add_message(
+                db_session,
+                cid,
+                role="user",
+                content=text,
+                direction="inbound",
+            )
 
             # Add a new customer to the enquiries CRM on their first message.
             from app.services.enquiry_service import ensure_enquiry
 
-            customer = db_session.get(Contact, contact_id)
             ensure_enquiry(
                 db_session,
                 phone=destination,
                 message=text,
-                customer_name=sender_name or (customer.name if customer else ""),
+                customer_name=sender_name or (contact.name if contact else ""),
                 source="whatsapp",
             )
+
+        if not ai_enabled:
+            logger.info("AI assistant disabled; recorded message but not replying to %s", destination)
+            return
+
+        chat_session = await session_store.get_active(destination)
 
         if normalized in ACTIVATION_PHRASES or normalized.startswith("kabilai ai "):
             chat_session = await session_store.start(destination, sender_name)
@@ -141,12 +132,10 @@ class AssistantWorkflow:
             return
 
         elif chat_session is None:
-            logger.info("Ignoring (no AI session) from %s: %s", destination, text)
+            logger.info("Recorded message (no AI session) from %s: %s", destination, text)
             return
 
         chat_session.touch()
-
-        _save_message(cid, "user", text)
 
         try:
             reply = await self._run_agent(chat_session, text, destination)

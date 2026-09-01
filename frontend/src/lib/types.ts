@@ -58,6 +58,8 @@ export type Contact = {
 export type Message = {
   role: string
   content: string
+  direction: "inbound" | "outbound"
+  created_at?: string
 }
 
 export type CompanyInfo = {

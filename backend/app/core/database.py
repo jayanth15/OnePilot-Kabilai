@@ -48,6 +48,7 @@ engine = _build_engine()
 _ADDITIVE_COLUMNS: list[tuple[str, str, str]] = [
     ("user", "role", "VARCHAR(255) NOT NULL DEFAULT 'user'"),
     ("user", "created_at", "TIMESTAMP"),
+    ("message", "direction", "VARCHAR(32) NOT NULL DEFAULT 'inbound'"),
 ]
 
 

@@ -13,6 +13,7 @@ class Conversation(SQLModel, table=True):
 class Message(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     conversation_id: int = Field(foreign_key="conversation.id", index=True)
-    role: str  # "user" or "assistant"
+    role: str  # "user" (customer) or "assistant" (us/AI/staff)
     content: str
+    direction: str = "inbound"  # "inbound" (customer) or "outbound" (us)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

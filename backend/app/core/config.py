@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     session_idle_minutes: int = 15
     session_max_history: int = 40
     session_sweep_seconds: int = 30
+    chat_retention_days: int = 30
 
     @property
     def allowed_origins(self) -> list[str]:
