@@ -92,6 +92,12 @@ class ComplaintConfirmedReply(BaseModel):
     brand: str = ""
 
 
+class ComplaintInProgressReply(BaseModel):
+    type: Literal["complaint_in_progress"] = "complaint_in_progress"
+    complaint_number: str = ""
+    brand: str = ""
+
+
 class ComplaintListReply(BaseModel):
     type: Literal["complaint_list"] = "complaint_list"
     complaints: list[ComplaintItem] = Field(default_factory=list)
@@ -115,6 +121,7 @@ DairyReply = (
     | EnquiryListReply
     | EnquiryConfirmedReply
     | ComplaintConfirmedReply
+    | ComplaintInProgressReply
     | ComplaintListReply
     | HandoffReply
     | HelpReply

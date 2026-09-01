@@ -18,6 +18,7 @@ from app.agents.replies import (
     CompanyInfo,
     CompanyInfoReply,
     ComplaintConfirmedReply,
+    ComplaintInProgressReply,
     ComplaintItem,
     ComplaintListReply,
     DeliveryCoverageReply,
@@ -49,6 +50,7 @@ from app.services.enquiry_service import (
 from app.services.complaint_service import (
     create_complaint,
     list_complaints_for_phone,
+    get_latest_open_complaint_for_phone,
 )
 from app.messaging.gupshup import gupshup_client
 
@@ -99,6 +101,9 @@ agent = Agent(
         "If it is a complaint you MUST call capture_complaint.\n"
         "- ENQUIRY = the customer is asking about products, prices, availability, delivery, or "
         "interest in buying. If it is an enquiry you MUST call create_enquiry_tool.\n\n"
+        "DUPLICATE COMPLAINTS: capture_complaint returns an 'in-progress' reply if the customer "
+        "already has an open complaint. In that case do NOT create another one — just apologise, "
+        "reassure them the support team will contact them soon, and ask if they need anything else.\n\n"
         "CUSTOMER PHONE: You already know the customer's phone number (it is provided to you in "
         "the tool context). DO NOT ask the customer for their phone number. Read it back and just "
         "confirm it before registering (e.g. \"I have your number as 91XXXXXXXXXX — correct?\"). "
@@ -262,12 +267,20 @@ async def capture_complaint(
     customer_name: str = "",
     category: str = "other",
     related_product: str = "",
-) -> ComplaintConfirmedReply:
+) -> ComplaintConfirmedReply | ComplaintInProgressReply:
     """Capture a customer complaint (e.g. milk not delivered, milk is bad).
-    Defaults to the caller's phone number. Sends a WhatsApp confirmation."""
+    Defaults to the caller's phone number. If they already have an open complaint,
+    do NOT create a duplicate — return the in-progress reply."""
     target = normalize_phone(phone) if phone else normalize_phone(ctx.deps.phone)
     with Session(engine) as session:
         brand = _msg_brand(session)
+        existing = get_latest_open_complaint_for_phone(session, target)
+        if existing:
+            return ComplaintInProgressReply(
+                complaint_number=existing.complaint_number,
+                brand=brand,
+            )
+
         complaint = create_complaint(
             session,
             phone=target,
