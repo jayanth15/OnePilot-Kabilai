@@ -84,7 +84,7 @@ function UsersPage() {
     }
   }
 
-  async function setRole(u: User, role: "admin" | "user") {
+  async function setRole(u: User, role: "admin" | "manager" | "user") {
     try {
       await apiFetch(`/api/v1/users/${u.id}`, {
         method: "PATCH",
@@ -153,6 +153,16 @@ function UsersPage() {
                         >
                           {u.role === "admin" ? "Make User" : "Make Admin"}
                         </Button>
+                        {u.role !== "manager" && (
+                          <Button size="xs" variant="outline" onClick={() => setRole(u, "manager")}>
+                            Make Manager
+                          </Button>
+                        )}
+                        {u.role === "manager" && (
+                          <Button size="xs" variant="outline" onClick={() => setRole(u, "user")}>
+                            Make User
+                          </Button>
+                        )}
                         <Button size="xs" variant="ghost" onClick={() => toggleActive(u)}>
                           {u.is_active ? "Disable" : "Enable"}
                         </Button>
@@ -211,6 +221,7 @@ function UsersPage() {
                     className="h-10 w-full rounded-none border border-b-input bg-transparent px-3 text-sm outline-none"
                   >
                     <option value="user">User</option>
+                    <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>

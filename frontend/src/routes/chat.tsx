@@ -10,8 +10,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import apiFetch from "@/lib/api"
 import type { Contact, Message } from "@/lib/types"
+import { formatTimeIST } from "@/lib/datetime"
 
-export const Route = createFileRoute("/chat")({ component: ChatPage })
+export const Route = createFileRoute("/chat")({
+  component: ChatPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    contact_id: typeof search.contact_id === "number" ? search.contact_id : undefined,
+  }),
+})
 
 function ChatPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -28,7 +34,17 @@ function ChatPage() {
     apiFetch<Contact[]>("/api/v1/contacts")
       .then((c) => {
         setContacts(c)
-        if (c.length > 0) setSelected((prev) => prev || c[0])
+        if (c.length === 0) return
+        const params = new URLSearchParams(window.location.search)
+        const wanted = Number(params.get("contact_id"))
+        if (Number.isFinite(wanted) && wanted > 0) {
+          const match = c.find((item) => item.id === wanted)
+          if (match) {
+            setSelected(match)
+            return
+          }
+        }
+        setSelected((prev) => prev || c[0])
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -164,7 +180,7 @@ function ChatPage() {
               ) : (
                 messages.map((m, i) => {
                   const isOutbound = m.direction === "outbound" || m.role === "assistant"
-                  const ts = m.created_at ? new Date(m.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : ""
+                  const ts = m.created_at ? formatTimeIST(m.created_at) : ""
                   return (
                     <div key={i} className={`flex ${isOutbound ? "justify-end" : "justify-start"}`}>
                       <div className="flex max-w-[70%] flex-col">

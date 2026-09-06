@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.router import api_router
-from app.api.routes.webhooks import gupshup_webhook
+from app.api.routes.webhooks import gupshup_webhook, whatsapp_inbound, whatsapp_verify
 from app.core.config import settings
 from app.core.database import init_db
 from app.core.lifespan import lifespan
@@ -31,8 +31,11 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     application.include_router(api_router, prefix=settings.api_prefix)
-    # Bare path for Gupshup webhooks configured without the /api/v1 prefix.
+    # Bare paths for WhatsApp webhooks configured without the /api/v1 prefix.
+    # Gupshup POSTs here; Meta Cloud API needs GET (verify) + POST (events).
     application.add_api_route("/webhook/gupshup", gupshup_webhook, methods=["POST"], include_in_schema=False)
+    application.add_api_route("/webhook/whatsapp", whatsapp_verify, methods=["GET"], include_in_schema=False)
+    application.add_api_route("/webhook/whatsapp", whatsapp_inbound, methods=["POST"], include_in_schema=False)
 
     @application.get("/", tags=["service"])
     async def service_info() -> dict[str, Any]:

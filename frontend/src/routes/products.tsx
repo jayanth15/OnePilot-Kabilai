@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, useRouter } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
+import { getUser } from "@/lib/auth"
 
 import { AppShell } from "@/components/app-shell"
 import { Button } from "@/components/ui/button"
@@ -54,7 +55,13 @@ function ProductsPage() {
       .finally(() => setLoading(false))
   }
 
+  const router = useRouter()
+
   useEffect(() => {
+    if (getUser().role === "manager") {
+      router.navigate({ to: "/dashboard" })
+      return
+    }
     load()
   }, [])
 

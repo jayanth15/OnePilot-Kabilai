@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 from app.core.config import settings
 from app.core.database import init_db
-from app.messaging.gupshup import gupshup_client
+from app.messaging.sender import whatsapp_sender
 from app.sessions.store import session_store
 from app.workflows.service import assistant_workflow
 
@@ -51,4 +51,4 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         with suppress(asyncio.CancelledError):
             await sweeper
             await retention
-        await gupshup_client.close()
+        await whatsapp_sender.close()

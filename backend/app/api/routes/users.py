@@ -28,11 +28,17 @@ class UserUpdate(BaseModel):
 
 
 def _serialize(user: User) -> dict:
+    if user.is_platform_admin:
+        role = "admin"
+    elif user.role in ("admin", "manager", "user"):
+        role = user.role
+    else:
+        role = "user"
     return {
         "id": str(user.id),
         "name": user.name,
         "email": user.email,
-        "role": "admin" if user.is_admin else "user",
+        "role": role,
         "is_active": user.is_active,
         "is_platform_admin": user.is_platform_admin,
     }
@@ -53,8 +59,8 @@ def create_user(
     session: Session = Depends(get_session),
     current_user: User = Depends(require_admin),
 ):
-    if body.role not in ("admin", "user"):
-        raise HTTPException(status_code=400, detail="role must be 'admin' or 'user'")
+    if body.role not in ("admin", "manager", "user"):
+        raise HTTPException(status_code=400, detail="role must be 'admin', 'manager' or 'user'")
     existing = session.exec(select(User).where(User.email == body.email)).first()
     if existing:
         raise HTTPException(status_code=409, detail="User with this email already exists")
@@ -82,8 +88,8 @@ def update_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     if body.role is not None:
-        if body.role not in ("admin", "user"):
-            raise HTTPException(status_code=400, detail="role must be 'admin' or 'user'")
+        if body.role not in ("admin", "manager", "user"):
+            raise HTTPException(status_code=400, detail="role must be 'admin', 'manager' or 'user'")
         user.role = body.role
     if body.name is not None:
         user.name = body.name

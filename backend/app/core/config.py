@@ -40,6 +40,16 @@ class Settings(BaseSettings):
     gupshup_mock: bool = True
     gupshup_timeout_seconds: float = 15.0
 
+    # --- Meta WhatsApp Cloud API (official, Graph API v26.0 latest as of Jul 29, 2026) ---
+    # whatsapp_provider: "gupshup" (default, backward compatible) or "cloud".
+    whatsapp_provider: str = "gupshup"
+    whatsapp_api_version: str = "v26.0"
+    whatsapp_access_token: str = ""
+    whatsapp_phone_number_id: str = ""
+    whatsapp_verify_token: str = ""
+    whatsapp_mock: bool = True
+    whatsapp_timeout_seconds: float = 15.0
+
     session_idle_minutes: int = 15
     session_max_history: int = 40
     session_sweep_seconds: int = 30

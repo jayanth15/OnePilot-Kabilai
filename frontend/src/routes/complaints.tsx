@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog"
 import apiFetch from "@/lib/api"
 import type { Complaint, EnquiryHistoryPage } from "@/lib/types"
+import { formatDateTimeIST } from "@/lib/datetime"
 import { isAdmin, resolveUser } from "@/lib/auth"
 import { cn } from "@/lib/utils"
 
@@ -350,7 +351,7 @@ function ComplaintsPage() {
                     {h.changed_by} ({h.actor_role})
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(h.created_at).toLocaleString("en-IN")}
+                    {formatDateTimeIST(h.created_at)}
                   </span>
                   {idx === 0 && <Badge className="text-xs">Latest</Badge>}
                 </div>

@@ -12,7 +12,7 @@ class User(SQLModel, table=True):
 
     is_platform_admin: bool = Field(default=False)
     is_active: bool = Field(default=True)
-    role: str = Field(default="user")  # "admin" | "user"
+    role: str = Field(default="user")  # "admin" | "manager" | "user"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     company_id: UUID | None = Field(
@@ -24,3 +24,11 @@ class User(SQLModel, table=True):
     @property
     def is_admin(self) -> bool:
         return self.role == "admin" or self.is_platform_admin
+
+    @property
+    def is_manager(self) -> bool:
+        return self.role == "manager"
+
+    @property
+    def is_staff(self) -> bool:
+        return self.is_admin or self.is_manager

@@ -15,7 +15,7 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react"
 
 import { Button } from "@/components/ui/button"
-import { isAdmin, logout } from "@/lib/auth"
+import { getUser, logout } from "@/lib/auth"
 import {
   Sidebar,
   SidebarContent,
@@ -30,16 +30,23 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-const navItems = [
-  { title: "Dashboard", href: "/dashboard", icon: Home01Icon, adminOnly: false },
-  { title: "Products", href: "/products", icon: MilkIcon, adminOnly: false },
-  { title: "Delivery Areas", href: "/delivery-areas", icon: Location01Icon, adminOnly: false },
-  { title: "Enquiries", href: "/enquiries", icon: ContactIcon, adminOnly: false },
-  { title: "Complaints", href: "/complaints", icon: BugIcon, adminOnly: false },
-  { title: "Chat", href: "/chat", icon: BubbleChatIcon, adminOnly: false },
-  { title: "Users", href: "/users", icon: UserMultiple02Icon, adminOnly: true },
-  { title: "Settings", href: "/settings", icon: Settings01Icon, adminOnly: false },
-].filter((item) => !item.adminOnly || isAdmin())
+type NavRole = "admin" | "manager" | "user"
+
+const navItems: { title: string; href: string; icon: typeof Home01Icon; roles: NavRole[] }[] = [
+  { title: "Dashboard", href: "/dashboard", icon: Home01Icon, roles: ["admin", "manager", "user"] },
+  { title: "Products", href: "/products", icon: MilkIcon, roles: ["admin", "user"] },
+  { title: "Delivery Areas", href: "/delivery-areas", icon: Location01Icon, roles: ["admin", "user"] },
+  { title: "Enquiries", href: "/enquiries", icon: ContactIcon, roles: ["admin", "manager", "user"] },
+  { title: "Complaints", href: "/complaints", icon: BugIcon, roles: ["admin", "manager", "user"] },
+  { title: "Chat", href: "/chat", icon: BubbleChatIcon, roles: ["admin", "manager", "user"] },
+  { title: "Users", href: "/users", icon: UserMultiple02Icon, roles: ["admin"] },
+  { title: "Settings", href: "/settings", icon: Settings01Icon, roles: ["admin", "user"] },
+]
+
+function visibleNavItems() {
+  const { role } = getUser()
+  return navItems.filter((item) => item.roles.includes(role))
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation()
@@ -65,7 +72,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Manage</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
+              {visibleNavItems().map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
                 return (
                   <SidebarMenuItem key={item.title}>

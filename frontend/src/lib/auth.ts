@@ -1,12 +1,15 @@
 import apiFetch from "@/lib/api"
 
+export type UserRole = "admin" | "manager" | "user"
+
 export type CurrentUser = {
-  role: "admin" | "user"
+  role: UserRole
   name: string | null
 }
 
 function storedUser(): CurrentUser {
-  const role = localStorage.getItem("role") === "admin" ? "admin" : "user"
+  const raw = localStorage.getItem("role")
+  const role: UserRole = raw === "admin" || raw === "manager" ? raw : "user"
   const name = localStorage.getItem("user_name")
   return { role, name }
 }
@@ -17,6 +20,15 @@ export function getUser(): CurrentUser {
 
 export function isAdmin(): boolean {
   return storedUser().role === "admin"
+}
+
+export function isManager(): boolean {
+  return storedUser().role === "manager"
+}
+
+export function isStaff(): boolean {
+  const { role } = storedUser()
+  return role === "admin" || role === "manager"
 }
 
 // Fallback: if the stored role is missing (e.g. logged in before roles existed),
@@ -31,7 +43,10 @@ export function resolveUser(): Promise<CurrentUser> {
   if (!mePromise) {
     mePromise = apiFetch<{ email: string; role: string; name?: string | null }>("/api/v1/auth/me")
       .then((r) => {
-        const user: CurrentUser = { role: r.role === "admin" ? "admin" : "user", name: r.name ?? null }
+        const user: CurrentUser = {
+          role: r.role === "admin" || r.role === "manager" ? r.role : "user",
+          name: r.name ?? null,
+        }
         localStorage.setItem("role", user.role)
         if (user.name) localStorage.setItem("user_name", user.name)
         return user

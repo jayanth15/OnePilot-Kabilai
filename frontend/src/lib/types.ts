@@ -75,7 +75,7 @@ export type User = {
   id: string
   name: string | null
   email: string
-  role: "admin" | "user"
+  role: "admin" | "manager" | "user"
   is_active: boolean
   is_platform_admin: boolean
 }

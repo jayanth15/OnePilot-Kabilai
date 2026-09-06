@@ -30,9 +30,15 @@ class MeResponse(BaseModel):
 
 @router.get("/me", response_model=MeResponse)
 def me(current_user: User = Depends(get_current_user)):
+    if current_user.is_platform_admin:
+        role = "admin"
+    elif current_user.role in ("admin", "manager", "user"):
+        role = current_user.role
+    else:
+        role = "user"
     return MeResponse(
         email=current_user.email,
-        role="admin" if current_user.is_admin else "user",
+        role=role,
         name=current_user.name,
     )
 
@@ -46,8 +52,14 @@ def login(body: LoginRequest, session: Session = Depends(get_session)):
             detail="Invalid email or password",
         )
     token = create_access_token(user.email)
+    if user.is_platform_admin:
+        role = "admin"
+    elif user.role in ("admin", "manager", "user"):
+        role = user.role
+    else:
+        role = "user"
     return LoginResponse(
         access_token=token,
-        role="admin" if user.is_admin else "user",
+        role=role,
         name=user.name,
     )

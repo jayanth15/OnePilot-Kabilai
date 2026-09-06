@@ -52,7 +52,7 @@ from app.services.complaint_service import (
     list_complaints_for_phone,
     get_latest_open_complaint_for_phone,
 )
-from app.messaging.gupshup import gupshup_client
+from app.messaging.sender import whatsapp_sender
 
 
 class AgentDeps(BaseModel):
@@ -253,7 +253,7 @@ async def request_operator_handoff(ctx: RunContext[AgentDeps], phone: str = "") 
     try:
         from app.messaging.templates import operator_handoff_msg
 
-        await gupshup_client.send_text(normalized, operator_handoff_msg())
+        await whatsapp_sender.send_text(normalized, operator_handoff_msg())
     except Exception:
         pass
     return HandoffReply()

@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, useRouter } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
+import { getUser } from "@/lib/auth"
 
 import { AppShell } from "@/components/app-shell"
 import { Button } from "@/components/ui/button"
@@ -16,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import apiFetch from "@/lib/api"
 import type { CompanyInfo } from "@/lib/types"
+import { formatDateIST } from "@/lib/datetime"
 
 export const Route = createFileRoute("/settings")({ component: SettingsPage })
 
@@ -62,7 +64,13 @@ function SettingsPage() {
       .finally(() => setLoading(false))
   }
 
+  const router = useRouter()
+
   useEffect(() => {
+    if (getUser().role === "manager") {
+      router.navigate({ to: "/dashboard" })
+      return
+    }
     load()
   }, [])
 
@@ -231,7 +239,7 @@ function SettingsPage() {
                       <td className="px-4 py-2">{c.name || "\u2014"}</td>
                       <td className="px-4 py-2 font-mono text-xs">{c.phone}</td>
                       <td className="px-4 py-2 text-muted-foreground">
-                        {new Date(c.created_at).toLocaleDateString("en-IN")}
+                        {formatDateIST(c.created_at)}
                       </td>
                     </tr>
                   ))}

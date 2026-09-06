@@ -5,7 +5,7 @@ from sqlmodel import Session
 from app.agents.dairy import AgentDeps, agent, normalize_output
 from app.core.config import settings
 from app.core.database import engine
-from app.messaging.gupshup import gupshup_client
+from app.messaging.sender import whatsapp_sender
 from app.messaging.templates import render_reply
 from app.services.conversation_service import (
     add_message,
@@ -52,7 +52,7 @@ class AssistantWorkflow:
     )
 
     async def notify_expired(self, phone: str) -> None:
-        await gupshup_client.send_text(phone, EXPIRED.format(mins=settings.session_idle_minutes))
+        await whatsapp_sender.send_text(phone, EXPIRED.format(mins=settings.session_idle_minutes))
 
     async def _run_agent(self, session: ChatSession, text: str, phone: str) -> str:
         async with session.lock:
@@ -121,14 +121,14 @@ class AssistantWorkflow:
                     name=sender_name or "there",
                     mins=settings.session_idle_minutes,
                 )
-                await gupshup_client.send_text(destination, greeting)
+                await whatsapp_sender.send_text(destination, greeting)
                 return
             text = first_prompt
 
         elif normalized in DEACTIVATION_PHRASES:
             if chat_session is not None:
                 await session_store.end(destination)
-                await gupshup_client.send_text(destination, GOODBYE)
+                await whatsapp_sender.send_text(destination, GOODBYE)
             return
 
         elif chat_session is None:
@@ -145,7 +145,7 @@ class AssistantWorkflow:
 
         reply = normalize_output(reply)
         _save_message(cid, "assistant", reply)
-        await gupshup_client.send_text(destination, reply)
+        await whatsapp_sender.send_text(destination, reply)
 
 
 assistant_workflow = AssistantWorkflow()

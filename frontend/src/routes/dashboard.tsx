@@ -23,6 +23,7 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import apiFetch from "@/lib/api"
 import type { Product, DeliveryArea, Enquiry, CompanyInfo } from "@/lib/types"
+import { formatDateIST } from "@/lib/datetime"
 
 export const Route = createFileRoute("/dashboard")({ component: DashboardPage })
 
@@ -195,7 +196,7 @@ function DashboardPage() {
                         <Badge variant="secondary">{e.status}</Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        {new Date(e.created_at).toLocaleDateString("en-IN")}
+                        {formatDateIST(e.created_at)}
                       </TableCell>
                     </TableRow>
                   ))}

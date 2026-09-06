@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, useRouter } from "@tanstack/react-router"
 import { useEffect, useState } from "react"
+import { formatDateTimeIST } from "@/lib/datetime"
 
 import { AppShell } from "@/components/app-shell"
 import { Button } from "@/components/ui/button"
@@ -74,7 +75,9 @@ function EnquiriesPage() {
   const [enquiries, setEnquiries] = useState<Enquiry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [statusFilter, setStatusFilter] = useState("")
+  const [statusFilter, setStatusFilter] = useState("new")
+  const router = useRouter()
+  const [messagingId, setMessagingId] = useState<number | null>(null)
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
@@ -158,6 +161,21 @@ function EnquiriesPage() {
     }
   }
 
+  async function messageCustomer(e: Enquiry) {
+    setMessagingId(e.id)
+    try {
+      const contact = await apiFetch<{ id: number }>("/api/v1/contacts/ensure", {
+        method: "POST",
+        body: JSON.stringify({ phone: e.phone, name: e.customer_name || "" }),
+      })
+      router.navigate({ to: "/chat", search: { contact_id: contact.id } as never })
+    } catch {
+      alert("Failed to open chat for this customer")
+    } finally {
+      setMessagingId(null)
+    }
+  }
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -231,6 +249,14 @@ function EnquiriesPage() {
                       <TableCell>{e.source}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
+                          <Button
+                            size="xs"
+                            variant="default"
+                            disabled={messagingId === e.id}
+                            onClick={() => messageCustomer(e)}
+                          >
+                            {messagingId === e.id ? "Opening..." : "Message"}
+                          </Button>
                           {admin && (
                             <Button size="xs" variant="ghost" onClick={() => loadHistory(e.id)}>
                               History
@@ -343,7 +369,7 @@ function EnquiriesPage() {
                     {h.changed_by} ({h.actor_role})
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(h.created_at).toLocaleString("en-IN")}
+                    {formatDateTimeIST(h.created_at)}
                   </span>
                   {idx === 0 && <Badge className="text-xs">Latest</Badge>}
                 </div>

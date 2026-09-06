@@ -8,7 +8,7 @@ from app.agents.dairy import agent
 from app.core.database import get_session
 from app.core.auth import get_current_user
 from app.messaging.templates import render_reply
-from app.messaging.gupshup import gupshup_client
+from app.messaging.sender import whatsapp_sender
 from app.models.contact import Contact
 from app.models.user import User
 from app.services.conversation_service import (
@@ -79,7 +79,7 @@ async def send_message(
     add_message(session, cid, role="assistant", content=body.message, direction="outbound")
 
     try:
-        await gupshup_client.send_text(contact.phone, body.message)
+        await whatsapp_sender.send_text(contact.phone, body.message)
     except Exception as e:
         logger.warning("Failed to send WhatsApp to %s: %s", contact.phone, e)
 
