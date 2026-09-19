@@ -28,9 +28,11 @@ function ChatPage() {
   const [flagging, setFlagging] = useState(false)
   const [loading, setLoading] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const sendingRef = useRef(false)
+  const lastCountRef = useRef(0)
 
-  function loadContacts() {
-    setLoading(true)
+  function loadContacts(initial = false) {
+    if (initial) setLoading(true)
     apiFetch<Contact[]>("/api/v1/contacts")
       .then((c) => {
         setContacts(c)
@@ -47,23 +49,48 @@ function ChatPage() {
         setSelected((prev) => prev || c[0])
       })
       .catch(() => {})
-      .finally(() => setLoading(false))
+      .finally(() => {
+        if (initial) setLoading(false)
+      })
   }
 
   useEffect(() => {
-    loadContacts()
+    loadContacts(true)
+    // Background poll: keep the contact list and last-message previews fresh
+    // (selection is preserved by `setSelected((prev) => prev || c[0])`).
+    const t = setInterval(() => loadContacts(), 15000)
+    return () => clearInterval(t)
   }, [])
 
   useEffect(() => {
-    if (selected) {
+    if (!selected) {
+      setMessages([])
+      return
+    }
+    let cancelled = false
+    const fetchHistory = () => {
       apiFetch<Message[]>(`/api/v1/agent/history?contact_id=${selected.id}`)
-        .then(setMessages)
-        .catch(() => setMessages([]))
+        .then((msgs) => {
+          // Don't clobber the optimistic message while a staff send is in flight
+          if (!cancelled && !sendingRef.current) setMessages(msgs)
+        })
+        .catch(() => {})
+    }
+    fetchHistory()
+    // Poll every 5s so inbound WhatsApp / AI replies sync while the chat is open
+    const t = setInterval(fetchHistory, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(t)
     }
   }, [selected])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    // Only auto-scroll when messages were actually added, not on every poll refresh
+    if (messages.length !== lastCountRef.current) {
+      lastCountRef.current = messages.length
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+    }
   }, [messages])
 
   async function sendMessage(e: React.FormEvent) {
@@ -72,6 +99,7 @@ function ChatPage() {
     const text = input.trim()
     setInput("")
     setSending(true)
+    sendingRef.current = true
     try {
       await apiFetch("/api/v1/agent/send", {
         method: "POST",
@@ -84,7 +112,13 @@ function ChatPage() {
     } catch {
       alert("Failed to send message")
     } finally {
+      sendingRef.current = false
       setSending(false)
+      // Re-sync right away: the backend stores the message before replying,
+      // so this picks it up (plus anything that arrived meanwhile).
+      apiFetch<Message[]>(`/api/v1/agent/history?contact_id=${selected.id}`)
+        .then(setMessages)
+        .catch(() => {})
     }
   }
 
